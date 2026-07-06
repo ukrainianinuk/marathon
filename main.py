@@ -1,7 +1,6 @@
 """Точка входу: збирає Application, реєструє обробники та фонові задачі."""
 from __future__ import annotations
 
-import asyncio
 import logging
 
 from telegram import Update
@@ -26,15 +25,19 @@ async def error_handler(update: object, context) -> None:
     logger.error("Виняток під час обробки update: %s", context.error, exc_info=context.error)
 
 
+async def post_init(application: Application) -> None:
+    # Ініціалізуємо схему БД усередині циклу подій, яким керує сам python-telegram-bot,
+    # а не через окремий asyncio.run() до старту polling.
+    await application.bot_data["db"].init()
+
+
 def main() -> None:
     settings = load_settings()
 
     db = Database(settings.db_path)
-    asyncio.run(db.init())
-
     claude = ClaudeService(settings.anthropic_api_key, settings.claude_model)
 
-    application = Application.builder().token(settings.bot_token).build()
+    application = Application.builder().token(settings.bot_token).post_init(post_init).build()
     application.bot_data["db"] = db
     application.bot_data["claude"] = claude
     application.bot_data["settings"] = settings
