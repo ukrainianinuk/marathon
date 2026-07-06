@@ -143,6 +143,5 @@ async def cmd_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         )
         return
 
-    target_chat_id = settings.group_chat_ids[0]
-    post_id = await db.add_scheduled_post(target_chat_id, text, photo_file_id, publish_at)
+    post_id = await db.add_scheduled_post(settings.channel_chat_id, text, photo_file_id, publish_at)
     await update.message.reply_text(f"Пост #{post_id} заплановано на {publish_at.strftime('%Y-%m-%d %H:%M %Z')}.")

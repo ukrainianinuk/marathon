@@ -68,9 +68,14 @@ marathon_bot/
 - **ID групи (`GROUP_CHAT_IDS`)**: додай `@RawDataBot` у групу марафону, він одразу пришле
   JSON з `"chat": {"id": -100123456789, ...}`. Це значення (разом зі знаком `-`) і є ID групи.
   Після перевірки бота можна видалити з групи.
-  - Якщо у тебе канал з окремою групою обговорень (коментарі до постів каналу) — тобі
-    потрібен ID саме **групи обговорень** (там з'являються коментарі учасників), а не каналу.
+  - Якщо у тебе канал з окремою групою обговорень (коментарі до постів каналу) — сюди
+    вкажи ID саме **групи обговорень** (там з'являються коментарі учасників), а не каналу.
+    Бот моніторить (читає повідомлення, нараховує бали) тільки чати з цього списку.
   - Можна вказати кілька ID через кому: `GROUP_CHAT_IDS=-100111,-100222`.
+- **ID каналу (`CHANNEL_CHAT_ID`)** — окремо, лише якщо у тебе є канал і ти хочеш
+  публікувати туди пости командою `/schedule`. Дізнатись так само через `@RawDataBot`,
+  додавши його тимчасово адміністратором каналу. Якщо `CHANNEL_CHAT_ID` не вказати,
+  `/schedule` публікуватиме в перший чат зі списку `GROUP_CHAT_IDS`.
 
 ## Крок 3. Ключ Anthropic API
 
@@ -93,6 +98,7 @@ BOT_TOKEN=<токен від BotFather>
 ANTHROPIC_API_KEY=<ключ Anthropic>
 ADMIN_USER_ID=<твій user_id>
 GROUP_CHAT_IDS=<ID групи (груп) через кому>
+CHANNEL_CHAT_ID=<ID каналу для /schedule, необов'язково>
 REMINDER_THRESHOLD_HOURS=6
 TIMEZONE=Europe/London
 DAILY_DIGEST_TIME=20:00
@@ -137,7 +143,7 @@ pytest tests/ -v
 1. Заведи акаунт на [railway.app](https://railway.app/) (можна через GitHub).
 2. У Railway: **New Project → Deploy from GitHub repo** → вибери цей репозиторій.
 3. У **Variables** додай усі змінні з твого `.env` (`BOT_TOKEN`, `ANTHROPIC_API_KEY`,
-   `ADMIN_USER_ID`, `GROUP_CHAT_IDS`, `REMINDER_THRESHOLD_HOURS`, `TIMEZONE`,
+   `ADMIN_USER_ID`, `GROUP_CHAT_IDS`, `CHANNEL_CHAT_ID`, `REMINDER_THRESHOLD_HOURS`, `TIMEZONE`,
    `DAILY_DIGEST_TIME`, `CLAUDE_MODEL`, `DB_PATH`, `TASK_HASHTAG_DAYS`) — **не** через
    файл `.env` (він не потрапить у репозиторій), а напряму в інтерфейсі Railway.
 4. У **Settings → Start Command** вкажи:

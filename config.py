@@ -27,6 +27,7 @@ class Settings:
     anthropic_api_key: str
     admin_user_id: int
     group_chat_ids: list[int]
+    channel_chat_id: int
     reminder_threshold_hours: float
     timezone: str
     daily_digest_time: str  # "HH:MM" за налаштованою таймзоною
@@ -36,11 +37,18 @@ class Settings:
 
 
 def load_settings() -> Settings:
+    group_chat_ids = _get_int_list("GROUP_CHAT_IDS")
+    channel_chat_id_str = os.getenv("CHANNEL_CHAT_ID", "").strip()
+    # CHANNEL_CHAT_ID — окремий чат (зазвичай канал), куди публікуються пости через /schedule.
+    # Якщо не задано, публікуємо в перший чат із GROUP_CHAT_IDS (моніторинг і публікація — той самий чат).
+    channel_chat_id = int(channel_chat_id_str) if channel_chat_id_str else group_chat_ids[0]
+
     return Settings(
         bot_token=os.environ["BOT_TOKEN"],
         anthropic_api_key=os.environ["ANTHROPIC_API_KEY"],
         admin_user_id=_get_int("ADMIN_USER_ID"),
-        group_chat_ids=_get_int_list("GROUP_CHAT_IDS"),
+        group_chat_ids=group_chat_ids,
+        channel_chat_id=channel_chat_id,
         reminder_threshold_hours=float(os.getenv("REMINDER_THRESHOLD_HOURS", "6")),
         timezone=os.getenv("TIMEZONE", "Europe/London"),
         daily_digest_time=os.getenv("DAILY_DIGEST_TIME", "20:00"),
