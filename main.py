@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 
 from telegram import Update
+from telegram.error import TelegramError
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, MessageHandler, filters
 
 from bot.admin_commands import cmd_bonus, cmd_leaderboard, cmd_schedule, cmd_start
@@ -23,6 +24,16 @@ logger = logging.getLogger(__name__)
 
 async def error_handler(update: object, context) -> None:
     logger.error("Виняток під час обробки update: %s", context.error, exc_info=context.error)
+    settings = context.application.bot_data.get("settings")
+    if settings is None:
+        return
+    try:
+        await context.bot.send_message(
+            chat_id=settings.admin_user_id,
+            text="⚠️ Сталася помилка під час обробки повідомлення/команди. Деталі — в логах Railway.",
+        )
+    except TelegramError:
+        logger.exception("Не вдалося сповістити адміна про помилку")
 
 
 async def post_init(application: Application) -> None:

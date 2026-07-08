@@ -43,6 +43,9 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(START_TEXT)
 
 
+TELEGRAM_MESSAGE_LIMIT = 4000  # трохи нижче реального ліміту Telegram (4096) про всяк випадок
+
+
 @admin_only
 async def cmd_leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     db = context.application.bot_data["db"]
@@ -59,7 +62,27 @@ async def cmd_leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             f"(повідомлення: {e.messages}, коментарі: {e.thread_comments}, "
             f"завдання: {e.tasks_completed}, бонус: {e.bonus})"
         )
-    await update.message.reply_text("\n".join(lines))
+
+    for chunk in _chunk_lines(lines, TELEGRAM_MESSAGE_LIMIT):
+        await update.message.reply_text(chunk)
+
+
+def _chunk_lines(lines: list[str], limit: int) -> list[str]:
+    """Розбиває список рядків на повідомлення, кожне з яких не перевищує ліміт Telegram."""
+    chunks = []
+    current: list[str] = []
+    current_len = 0
+    for line in lines:
+        line_len = len(line) + 1  # +1 за символ нового рядка
+        if current and current_len + line_len > limit:
+            chunks.append("\n".join(current))
+            current = []
+            current_len = 0
+        current.append(line)
+        current_len += line_len
+    if current:
+        chunks.append("\n".join(current))
+    return chunks
 
 
 @admin_only
