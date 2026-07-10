@@ -7,7 +7,7 @@ from telegram import Update
 from telegram.error import TelegramError
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, MessageHandler, filters
 
-from bot.admin_commands import cmd_bonus, cmd_leaderboard, cmd_schedule, cmd_start
+from bot.admin_commands import cmd_bonus, cmd_cancel, cmd_leaderboard, cmd_schedule, cmd_start
 from bot.handlers import handle_admin_callback, handle_group_message
 from config import load_settings
 from db.database import Database
@@ -58,6 +58,7 @@ def main() -> None:
     application.add_handler(CommandHandler("leaderboard", cmd_leaderboard))
     application.add_handler(CommandHandler("bonus", cmd_bonus))
     application.add_handler(CommandHandler("schedule", cmd_schedule))
+    application.add_handler(CommandHandler("cancel", cmd_cancel))
     application.add_handler(CallbackQueryHandler(handle_admin_callback))
 
     group_filter = filters.Chat(chat_id=settings.group_chat_ids) & ~filters.COMMAND & (filters.TEXT | filters.PHOTO)

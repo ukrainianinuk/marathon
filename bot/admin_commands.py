@@ -21,6 +21,7 @@ START_TEXT = """\
 /leaderboard — рейтинг активності учасників
 /bonus — нарахувати бонусні бали вручну
 /schedule — поставити пост у чергу публікації (або переглянути чергу)
+/cancel — скасувати запланований пост із черги
 
 Я також сам стежу за чатом, шлю нагадування про невідповідені повідомлення,
 попереджаю про термінові ситуації і щодня надсилаю дайджест настроїв.
@@ -168,3 +169,24 @@ async def cmd_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     post_id = await db.add_scheduled_post(settings.channel_chat_id, text, photo_file_id, publish_at)
     await update.message.reply_text(f"Пост #{post_id} заплановано на {publish_at.strftime('%Y-%m-%d %H:%M %Z')}.")
+
+
+@admin_only
+async def cmd_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Використання: /cancel <номер поста> (номер видно у списку /schedule без аргументів)."""
+    db = context.application.bot_data["db"]
+    args = context.args or []
+
+    if not args or not args[0].isdigit():
+        await update.message.reply_text("Формат: /cancel <номер поста> — номер бачиш у списку команди /schedule.")
+        return
+
+    post_id = int(args[0])
+    cancelled = await db.cancel_scheduled_post(post_id)
+    if cancelled:
+        await update.message.reply_text(f"Пост #{post_id} скасовано і не буде опублікований.")
+    else:
+        await update.message.reply_text(
+            f"Пост #{post_id} не знайдено в черзі — можливо, він уже опублікований, скасований раніше, "
+            "або такого номера не існує. Перевір актуальний список командою /schedule."
+        )

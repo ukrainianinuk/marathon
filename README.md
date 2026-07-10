@@ -13,7 +13,7 @@ marathon_bot/
 ├── db/database.py            — SQLite: учасники, повідомлення, бали, черга постів
 ├── services/claude_service.py — виклики Claude API (тональність, детекція завдань, відповіді)
 ├── bot/handlers.py            — обробка повідомлень групи + callback-кнопки
-├── bot/admin_commands.py       — /start, /leaderboard, /bonus, /schedule
+├── bot/admin_commands.py       — /start, /leaderboard, /bonus, /schedule, /cancel
 ├── bot/notifier.py             — формування сповіщень адміну
 ├── scheduler/jobs.py           — нагадування, публікація постів, щоденний дайджест
 └── tests/test_scoring.py       — юніт-тести логіки балів (без Telegram/мережі)
@@ -27,7 +27,8 @@ marathon_bot/
    чат з 2 варіантами відповіді. Термінові повідомлення (фрустрація/ризик покинути марафон)
    сповіщаються одразу.
 3. **Відкладені пости** — команда `/schedule YYYY-MM-DD HH:MM [текст]` (можна у відповідь
-   на пост із фото).
+   на пост із фото). `/schedule` без аргументів показує чергу з номерами постів.
+   `/cancel <номер>` скасовує пост із черги, поки він ще не опублікований.
 4. **Аналіз настрою + щоденний дайджест** — категорії: positive, neutral, frustrated,
    question, urgent. Дайджест надсилається щодня о `DAILY_DIGEST_TIME`.
 5. **Пропозиції відповідей** — 2 варіанти теплим, підтримуючим тоном, з кнопками
@@ -41,7 +42,7 @@ marathon_bot/
    - `/bonus <бали> [причина]` у відповідь на повідомлення учасника, або
      `/bonus <user_id> <бали> [причина]`
 
-Усі команди керування (`/start`, `/leaderboard`, `/bonus`, `/schedule`) працюють лише
+Усі команди керування (`/start`, `/leaderboard`, `/bonus`, `/schedule`, `/cancel`) працюють лише
 для твого `ADMIN_USER_ID` — інші учасники їх просто не побачать.
 
 ## Крок 1. Створення бота через @BotFather

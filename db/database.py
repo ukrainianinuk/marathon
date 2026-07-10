@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS scheduled_posts (
     photo_file_id TEXT,
     publish_at TEXT NOT NULL,
     published INTEGER NOT NULL DEFAULT 0,
+    cancelled INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL
 );
 """
@@ -305,7 +306,11 @@ class Database:
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
             cursor = await db.execute(
-                "SELECT * FROM scheduled_posts WHERE published = 0 AND publish_at <= ? ORDER BY publish_at ASC",
+                """
+                SELECT * FROM scheduled_posts
+                WHERE published = 0 AND cancelled = 0 AND publish_at <= ?
+                ORDER BY publish_at ASC
+                """,
                 (now,),
             )
             return list(await cursor.fetchall())
@@ -314,7 +319,7 @@ class Database:
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
             cursor = await db.execute(
-                "SELECT * FROM scheduled_posts WHERE published = 0 ORDER BY publish_at ASC"
+                "SELECT * FROM scheduled_posts WHERE published = 0 AND cancelled = 0 ORDER BY publish_at ASC"
             )
             return list(await cursor.fetchall())
 
@@ -322,6 +327,17 @@ class Database:
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute("UPDATE scheduled_posts SET published = 1 WHERE id = ?", (post_id,))
             await db.commit()
+
+    async def cancel_scheduled_post(self, post_id: int) -> bool:
+        """Скасовує ще не опублікований пост. Повертає False, якщо пост не знайдено,
+        уже опублікований або вже скасований раніше."""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "UPDATE scheduled_posts SET cancelled = 1 WHERE id = ? AND published = 0 AND cancelled = 0",
+                (post_id,),
+            )
+            await db.commit()
+            return cursor.rowcount > 0
 
     async def get_sentiment_digest(self, since: dt.datetime) -> dict:
         async with aiosqlite.connect(self.db_path) as db:

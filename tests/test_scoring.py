@@ -143,3 +143,38 @@ def test_task_hashtag_detection_no_hashtag():
 
 def test_task_hashtag_detection_none_text():
     assert ClaudeService.detect_task_day(None, max_day=20) is None
+
+
+@pytest.mark.asyncio
+async def test_cancel_scheduled_post_removes_from_queue(db):
+    import datetime as dt
+
+    future = dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=1)
+    post_id = await db.add_scheduled_post(chat_id=-100, text="Привіт!", photo_file_id=None, publish_at=future)
+
+    pending_before = await db.get_pending_posts()
+    assert any(p["id"] == post_id for p in pending_before)
+
+    cancelled = await db.cancel_scheduled_post(post_id)
+    assert cancelled is True
+
+    pending_after = await db.get_pending_posts()
+    assert not any(p["id"] == post_id for p in pending_after)
+
+
+@pytest.mark.asyncio
+async def test_cancel_unknown_post_returns_false(db):
+    cancelled = await db.cancel_scheduled_post(9999)
+    assert cancelled is False
+
+
+@pytest.mark.asyncio
+async def test_cancel_already_published_post_returns_false(db):
+    import datetime as dt
+
+    past = dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=1)
+    post_id = await db.add_scheduled_post(chat_id=-100, text="Старий пост", photo_file_id=None, publish_at=past)
+    await db.mark_post_published(post_id)
+
+    cancelled = await db.cancel_scheduled_post(post_id)
+    assert cancelled is False
